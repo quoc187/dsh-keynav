@@ -442,6 +442,62 @@ function wire(window) {
   ok(window.document.activeElement?.getAttribute("aria-label") === "Three", "focus returns to the selected option, not the first", String(window.document.activeElement?.getAttribute("aria-label")));
 }
 
+/* ------------------------------------------------------------------ */
+/* what "come back to this question" focuses                           */
+/* ------------------------------------------------------------------ */
+const refocus = async (window) => {
+  const span = window.document.querySelector("footer span");
+  const [step, total] = span.textContent.split("/").map((part) => Number(part.trim()));
+  span.textContent = `${step === total ? step - 1 : step + 1} / ${total}`;
+  await frame(window);
+  await tick();
+  await tick();
+};
+
+{
+  console.log("return with nothing answered");
+  const { window } = setup(
+    card({ multi: true, withField: true, progress: "1 / 2", options: [{ label: "Alpha" }, { label: "Bravo" }] }),
+  );
+  await frame(window);
+  await tick();
+  await refocus(window);
+  ok(window.document.activeElement?.getAttribute("aria-label") === "Alpha", "focuses the first option");
+}
+
+{
+  console.log("return with only the free-text answer");
+  const { window } = setup(
+    card({ multi: true, withField: true, progress: "1 / 2", options: [{ label: "Alpha" }, { label: "Bravo" }] }),
+  );
+  await frame(window);
+  await tick();
+  const field = window.document.querySelector("textarea");
+  field.value = "typed answer";
+  await refocus(window);
+  ok(window.document.activeElement === field, "focuses the free-text box, not the first option", window.document.activeElement?.tagName);
+
+  console.log("return with the free-text answer and a selected option");
+  const second = window.document.querySelectorAll('[data-option-row] > button')[1];
+  second.setAttribute("aria-checked", "true");
+  await refocus(window);
+  ok(window.document.activeElement === second, "a selected option wins over the free-text box", window.document.activeElement?.getAttribute("aria-label") ?? window.document.activeElement?.tagName);
+}
+
+{
+  console.log("return with several selected options");
+  const { window } = setup(
+    card({ multi: true, progress: "1 / 2", options: [{ label: "Alpha" }, { label: "Bravo" }, { label: "Charlie" }] }),
+  );
+  await frame(window);
+  await tick();
+  const buttons = [...window.document.querySelectorAll('[data-option-row] > button')];
+  buttons[1].setAttribute("aria-checked", "true");
+  buttons[2].setAttribute("aria-checked", "true");
+  await refocus(window);
+  ok(window.document.activeElement === buttons[1], "focuses the first selected option", window.document.activeElement?.getAttribute("aria-label"));
+}
+
 console.log("");
 if (failures > 0) {
   console.log(`${failures} failure(s)`);

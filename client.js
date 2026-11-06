@@ -157,7 +157,15 @@ window.__ModuleLoader__.load({
       return `${panel.getAttribute('data-question-key') ?? panel.getAttribute('data-plan-review-key') ?? ''}|${progress}|${labels}`;
     };
 
-    /** Focus what a keyboard user should land on when a panel appears. */
+    /**
+     * Focus what a keyboard user should land on when a panel appears.
+     *
+     * Question card, in order of preference:
+     *   1. the first selected option — the answer already given;
+     *   2. the free-text box when it holds the only answer;
+     *   3. the first option.
+     * Everything else focuses its primary decision button.
+     */
     const focusInitial = (panel) => {
       const items = navItems(panel);
       if (items.length === 0) return;
@@ -165,9 +173,25 @@ window.__ModuleLoader__.load({
         const selected = items.find(
           (item) => item instanceof Element && item.getAttribute('aria-checked') === 'true',
         );
-        const target = selected ?? items[0];
-        target.focus({ preventScroll: true });
-        log('focused option', target.getAttribute('aria-label'));
+        if (selected !== undefined) {
+          selected.focus({ preventScroll: true });
+          log('focused selected option', selected.getAttribute('aria-label'));
+          return;
+        }
+        const field = answerField(panel);
+        if (field !== null && field.value.trim() !== '') {
+          field.focus({ preventScroll: true });
+          const end = field.value.length;
+          try {
+            field.setSelectionRange(end, end);
+          } catch {
+            // Some field types reject a selection range; focus alone is fine.
+          }
+          log('focused the free-text answer');
+          return;
+        }
+        items[0].focus({ preventScroll: true });
+        log('focused the first option');
         return;
       }
       const primary = items[items.length - 1];

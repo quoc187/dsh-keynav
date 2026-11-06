@@ -11,9 +11,13 @@ composer.
 | `Enter` | commit a highlighted radio, then submit / advance | activate the focused button |
 | `1`–`9` | activate that numbered option | — |
 
-Focus lands on the first option (or the already-selected one) as soon as a
-question card appears, and on the primary button for plan-review and approval
-cards. The focused row is drawn with the card's own hover background plus a thin
+Focus is decided when a question card appears or when you return to a question:
+
+1. the **first selected option**, when anything is selected;
+2. otherwise the **free-text box**, when it holds the only answer;
+3. otherwise the **first option**.
+
+Plan-review and approval cards focus their primary button. The focused row is drawn with the card's own hover background plus a thin
 accent inset ring, so the keyboard cursor cannot be mistaken for the card's
 selected state (which is a background plus a subtle border).
 
