@@ -20,7 +20,13 @@ const BACKUP = join(HERE, "profile-package.json.bak");
 const PACKAGE_NAME = "dsh-keynav";
 
 const args = process.argv.slice(2);
-const mode = args.includes("--revert") ? "revert" : args.includes("--check") ? "check" : "install";
+const mode = args.includes("--revert")
+  ? "revert"
+  : args.includes("--check")
+    ? "check"
+    : args.includes("--bundle-only")
+      ? "bundle"
+      : "install";
 
 if (!existsSync(MANIFEST)) {
   console.error(`no profile at ${PROFILE}`);
@@ -52,8 +58,10 @@ if (mode === "revert") {
 
 if (!existsSync(BACKUP)) copyFileSync(MANIFEST, BACKUP);
 
-manifest.dependencies = manifest.dependencies ?? {};
-manifest.dependencies[PACKAGE_NAME] = `link:${HERE}`;
+if (mode === "install") {
+  manifest.dependencies = manifest.dependencies ?? {};
+  manifest.dependencies[PACKAGE_NAME] = `link:${HERE}`;
+}
 
 manifest.dsh = manifest.dsh ?? {};
 manifest.dsh.profile = manifest.dsh.profile ?? {};
@@ -62,9 +70,11 @@ if (!next.includes(PACKAGE_NAME)) next.push(PACKAGE_NAME);
 manifest.dsh.profile.bundles = next;
 
 writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`linked ${PACKAGE_NAME} -> ${HERE}`);
+if (mode === "install") console.log(`linked ${PACKAGE_NAME} -> ${HERE}`);
 console.log(`registered bundle in ${MANIFEST}`);
 console.log(`backup at ${BACKUP}`);
 console.log("");
-console.log("next:  dsh plugin --profile web install");
+console.log(
+  mode === "bundle" ? "next:  restart the profile" : "next:  dsh plugin --profile web install",
+);
 console.log("then restart the web profile (a page refresh is not enough).");

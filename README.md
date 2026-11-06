@@ -33,17 +33,26 @@ and clicks the card's own Next/Submit button.
 
 ## Install
 
+### From GitHub
+
 ```sh
-node install.mjs                 # link into ~/.dsh/profiles/web and register the bundle
-dsh plugin --profile web install # materialise the link
+dsh plugin --profile web add github:quoc187/dsh-keynav
+node install.mjs --bundle-only    # adds "dsh-keynav" to dsh.profile.bundles
 ```
 
-Then restart the web profile. A page refresh is not enough: the bundle list is
-read at launch.
+### From a local checkout
 
 ```sh
-node install.mjs --check         # is the profile pointing here?
-node install.mjs --revert        # restore the pre-install package.json
+node install.mjs                  # link the package and register the bundle
+dsh plugin --profile web install  # materialise the link
+```
+
+Either way the profile must be **restarted** afterwards: the bundle list is read
+at launch, so a page refresh does not mount a new plugin.
+
+```sh
+node install.mjs --check          # is the profile pointing here?
+node install.mjs --revert         # restore the pre-install package.json
 ```
 
 Override the target profile with `DSH_PROFILE_DIR=/path/to/profile node install.mjs`.
