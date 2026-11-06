@@ -404,6 +404,44 @@ function wire(window) {
   ok(clicks.includes("NAV:next"), "and moves to the next question", JSON.stringify(clicks));
 }
 
+/* ------------------------------------------------------------------ */
+/* a replaced option list keeps focus on the selected option           */
+/* ------------------------------------------------------------------ */
+{
+  console.log("returning to a single-choice question");
+  const { window } = setup(`
+    <div data-question-key="q1">
+      <section>
+        <div data-question-scroll>
+          <div role="radiogroup">
+            <div data-option-row><button type="button" role="radio" aria-checked="false" aria-label="One">One</button></div>
+            <div data-option-row><button type="button" role="radio" aria-checked="false" aria-label="Two">Two</button></div>
+            <div data-option-row><button type="button" role="radio" aria-checked="true" aria-label="Three">Three</button></div>
+          </div>
+        </div>
+        <footer>
+          <div class="pager"><button type="button" data-nav="prev">prev</button><span>1 / 2</span><button type="button" data-nav="next">next</button></div>
+          <div role="status"></div>
+          <div class="footerActions"><button type="button">Skip</button><button type="button" id="submit">Submit</button></div>
+        </footer>
+      </section>
+    </div>`);
+  await frame(window);
+  await tick();
+  ok(window.document.activeElement?.getAttribute("aria-label") === "Three", "selected option is focused on mount");
+
+  // React replaces the option nodes when the card re-renders.
+  const list = window.document.querySelector('[role="radiogroup"]');
+  list.innerHTML = ["One", "Two", "Three"]
+    .map((label) => `<div data-option-row><button type="button" role="radio" aria-checked="${String(label === "Three")}" aria-label="${label}">${label}</button></div>`)
+    .join("");
+  ok(window.document.activeElement === window.document.body, "focus fell to body when the nodes were replaced");
+
+  await frame(window);
+  await tick();
+  ok(window.document.activeElement?.getAttribute("aria-label") === "Three", "focus returns to the selected option, not the first", String(window.document.activeElement?.getAttribute("aria-label")));
+}
+
 console.log("");
 if (failures > 0) {
   console.log(`${failures} failure(s)`);

@@ -187,15 +187,18 @@ window.__ModuleLoader__.load({
      * Restore focus after a re-render replaced the focused node.
      *
      * Only reacts when focus fell to the document body: moving focus away to a
-     * real control is the user's choice and is left alone.
+     * real control is the user's choice and is left alone. The signature is
+     * cleared first so the full decision runs again — otherwise a replaced node
+     * would be "restored" onto the first option even when another one is
+     * selected.
      */
     const ensureFocus = (panel) => {
       if (!panel.isConnected) return;
       if (panel.contains(document.activeElement)) return;
       if (document.activeElement !== null && document.activeElement !== document.body) return;
-      const items = navItems(panel);
-      if (items.length === 0) return;
-      items[0].focus({ preventScroll: true });
+      if (navItems(panel).length === 0) return;
+      panel.dataset.keynavSignature = '';
+      focusInitial(panel);
       log('restored focus after re-render');
     };
 
